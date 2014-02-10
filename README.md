@@ -1,9 +1,10 @@
 #Vim Whitespace Plugin
 
-This plugin causes all trailing whitespace and tab characters to be
+This plugin causes all trailing whitespace characters (spaces and tabs) to be
 highlighted. Whitespace for the current line will not be highlighted
 while in insert mode. It is possible to disable current line highlighting while in other
-modes as well (see options below).
+modes as well (see options below). A helper function `:StripWhitespace` is also provided
+to make whitespace cleaning painless. 
 
 ##Installation
 There are a few ways you can go about installing this plugin:
@@ -56,10 +57,12 @@ To re-enable highlighting for the current line in normal mode:
 ```
 
 To clean extra whitespace, call:
-`:StripWhitespace`
-By default it operates on the entire file.
-Pass a range (or use V to select some lines) to restrict the portion of the
-file that gets stripped.
+```
+:StripWhitespace
+```
+By default this operates on the entire file. To restrict the portion of
+the file that it cleans, either give it a range or select a group of lines
+in visual mode and then execute it.
 
 To enable/disable stripping of extra whitespace on file save, call:
 ```
@@ -69,13 +72,15 @@ This will strip all trailing whitespace everytime you save the file for all file
 types.  If you would prefer to only stip whitespace for certain filetypes, add
 the following to your `~/.vimrc`:
 ```
-autocmd FileType <desired_filetypes> autocmd BufWritePre <buffer> FixWhitespace
+autocmd FileType <desired_filetypes> autocmd BufWritePre <buffer> StripWhitespace
 ```
 where `<desired_filetypes>` is a comma separated list of the file types you want
 to be stripped of whitespace on file save ( ie. `javascript,c,cpp,java,html,ruby` )
 Note that `<buffer>` is a keyword here and should stay just as it appears in the line above.
 
 Repository exists at: http://github.com/ntpeters/vim-better-whitespace
+
+Originally inspired by: https://github.com/bronson/vim-trailing-whitespace
 
 Based on:
 
