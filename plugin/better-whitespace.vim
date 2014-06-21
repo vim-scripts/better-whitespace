@@ -2,28 +2,38 @@
 " Repository: https://github.com/ntpeters/vim-better-whitespace
 
 " Prevent loading the plugin multiple times
-if exists( "g:loaded_better_whitespace_plugin" )
+if exists('g:loaded_better_whitespace_plugin')
     finish
-else
-    let g:loaded_better_whitespace_plugin = 1
 endif
+let g:loaded_better_whitespace_plugin = 1
+
+" Initializes a given variable to a given value. The variable is only
+" initialized if it does not exist prior.
+function! s:InitVariable(var, value)
+  if !exists(a:var)
+    execute 'let ' . a:var . ' = ' . string(a:value)
+  endif
+endfunction
 
 " Set this to enable/disable whitespace highlighting
-let g:better_whitespace_enabled = 1
+call s:InitVariable('g:better_whitespace_enabled', 1)
 
 " Set this to disable highlighting on the current line in all modes
 " WARNING: This checks for current line on cursor move, which can significantly
 "          impact the performance of Vim (especially on large files)
-let g:current_line_whitespace_disabled_hard = 0
+call s:InitVariable('g:current_line_whitespace_disabled_hard', 0)
 
 " Set this to disable highlighting of the current line in all modes
 " This setting will not have the performance impact of the above, but
 " highlighting throughout the file may be overridden by other highlight
 " patterns with higher priority.
-let g:current_line_whitespace_disabled_soft = 0
+call s:InitVariable('g:current_line_whitespace_disabled_soft', 0)
 
 " Set this to enable stripping whitespace on file save
-let g:strip_whitespace_on_save = 0
+call s:InitVariable('g:strip_whitespace_on_save', 0)
+
+" Set this to blacklist specific filetypes
+call s:InitVariable('g:better_whitespace_filetypes_blacklist', [])
 
 " Only init once
 let s:better_whitespace_initialized = 0
@@ -32,9 +42,9 @@ let s:better_whitespace_initialized = 0
 function! s:WhitespaceInit()
     " Check if the user has already defined highlighting for this group
     if hlexists("ExtraWhitespace") == 0
-        highlight ExtraWhitespace ctermbg = red
+        highlight ExtraWhitespace ctermbg = red guibg = #FF0000
     endif
-    let g:better_whitespace_initialized = 1
+    let s:better_whitespace_initialized = 1
 endfunction
 
 " Enable the whitespace highlighting
@@ -44,7 +54,7 @@ function! s:EnableWhitespace()
         call <SID>WhitespaceInit()
         " Match default whitespace
         match ExtraWhitespace /\s\+$/
-        call <SID>RunAutoCommands()
+        call <SID>SetupAutoCommands()
     endif
 endfunction
 
@@ -55,7 +65,7 @@ function! s:DisableWhitespace()
         " Clear current whitespace matches
         match ExtraWhitespace ''
         syn clear ExtraWhitespace
-        call <SID>RunAutoCommands()
+        call <SID>SetupAutoCommands()
     endif
 endfunction
 
@@ -88,7 +98,7 @@ function! s:CurrentLineWhitespaceOff( level )
             match ExtraWhitespace ''
         endif
         " Re-run auto commands with the new settings
-        call <SID>RunAutoCommands()
+        call <SID>SetupAutoCommands()
     endif
 endfunction
 
@@ -97,7 +107,7 @@ function! s:CurrentLineWhitespaceOn()
     if g:better_whitespace_enabled == 1
         let g:current_line_whitespace_disabled_hard = 0
         let g:current_line_whitespace_disabled_soft = 0
-        call <SID>RunAutoCommands()
+        call <SID>SetupAutoCommands()
         syn clear ExtraWhitespace
         match ExtraWhitespace /\s\+$/
     endif
@@ -125,7 +135,7 @@ function! s:ToggleStripWhitespaceOnSave()
     else
         let g:strip_whitespace_on_save = 0
     endif
-    call <SID>RunAutoCommands()
+    call <SID>SetupAutoCommands()
 endfunction
 
 " Run :StripWhitespace to remove end of line whitespace
@@ -145,13 +155,18 @@ command! -nargs=* CurrentLineWhitespaceOff call <SID>CurrentLineWhitespaceOff( <
 command! CurrentLineWhitespaceOn call <SID>CurrentLineWhitespaceOn()
 
 " Process auto commands upon load
-autocmd VimEnter,WinEnter,BufEnter,FileType * call <SID>RunAutoCommands()
+autocmd VimEnter,WinEnter,BufEnter,FileType * call <SID>SetupAutoCommands()
 
 " Executes all auto commands
-function! <SID>RunAutoCommands()
+function! <SID>SetupAutoCommands()
     " Auto commands group
     augroup better_whitespace
         autocmd!
+
+        if index(g:better_whitespace_filetypes_blacklist, &ft) >= 0
+            silent! call clearmatches()
+            return
+        endif
 
         if g:better_whitespace_enabled == 1
             if s:better_whitespace_initialized == 0
@@ -192,4 +207,4 @@ function! <SID>RunAutoCommands()
 endfunction
 
 " Initial call to setup autocommands
-call <SID>RunAutoCommands()
+call <SID>SetupAutoCommands()
